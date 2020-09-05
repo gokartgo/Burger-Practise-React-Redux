@@ -1,7 +1,9 @@
 import React, { Component } from 'react'
+import { connect } from 'react-redux'
 import Input from '../../components/UI/Input/Input'
 import Button from '../../components/UI/Button/Button'
 import classes from './Auth.css'
+import * as actions from '../../store/actions/index'
 
 class Auth extends Component {
 	state = {
@@ -35,6 +37,32 @@ class Auth extends Component {
 				touched: false,
 			},
 		},
+		isSignup: true,
+	}
+
+	submitHandler = event => {
+		event.preventDefault()
+		this.props.onAuth(
+			this.state.controls.email.value,
+			this.state.controls.password.value,
+			this.state.isSignup,
+		)
+	}
+
+	inputChangedHandler = (event, controlName) => {
+		const updatedControls = {
+			...this.state.controls,
+			[controlName]: {
+				...this.state.controls[controlName],
+				value: event.target.value,
+				valid: this.checkValidity(
+					event.target.value,
+					this.state.controls[controlName].validation,
+				),
+				touched: true,
+			},
+		}
+		this.setState({ controls: updatedControls })
 	}
 
 	checkValidity(value, rules) {
@@ -58,20 +86,10 @@ class Auth extends Component {
 		return isValid
 	}
 
-	inputChangedHandler = (event, controlName) => {
-		const updatedControls = {
-			...this.state.controls,
-			[controlName]: {
-				...this.state.controls[controlName],
-				value: event.target.value,
-				valid: this.checkValidity(
-					event.target.value,
-					this.state.controls[controlName].validation,
-				),
-				touched: true,
-			},
-		}
-		this.setState({ controls: updatedControls })
+	switchAuthModeHandler = () => {
+		this.setState(prevState => {
+			return { isSignup: !prevState.isSignup }
+		})
 	}
 
 	render() {
@@ -98,13 +116,23 @@ class Auth extends Component {
 
 		return (
 			<div className={classes.Auth}>
-				<form>
+				<form onSubmit={this.submitHandler}>
 					{form}
 					<Button btnType='Success'>SUBMIT</Button>
 				</form>
+				<Button clicked={this.switchAuthModeHandler} btnType='Danger'>
+					SWITCH TO {this.state.isSignup ? 'SIGN IN' : 'SIGN UP'}
+				</Button>
 			</div>
 		)
 	}
 }
 
-export default Auth
+const mapDispatchToProps = dispatch => {
+	return {
+		onAuth: (email, password, isSignup) =>
+			dispatch(actions.auth(email, password, isSignup)),
+	}
+}
+
+export default connect(null, mapDispatchToProps)(Auth)
